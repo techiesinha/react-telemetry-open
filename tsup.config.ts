@@ -26,19 +26,11 @@ export default defineConfig({
   ],
   esbuildOptions(options) {
     options.target = "es2020";
+    // __PACKAGE_VERSION__ is a bare identifier in src/constants/defaults.ts
+    // esbuild replaces bare identifiers — not string literals
+    // npm always sets npm_package_version when running via npm scripts
     options.define = {
-      // Replace the version placeholder with the actual package version at build time.
-      // Reads from npm_package_version (set by npm scripts) or directly from package.json.
-      "process.env.npm_package_version": JSON.stringify(
-        process.env["npm_package_version"] ?? require("./package.json").version
-      ),
-      "__PACKAGE_VERSION__": JSON.stringify(
-        process.env["npm_package_version"] ?? require("./package.json").version
-      ),
-      // We deliberately do NOT define process.env.* here.
-      // Doing so would bake environment variable values into the published package —
-      // a serious security risk if secrets are set in the build environment.
-      // process.env access is left as-is for the consumer's own bundler to handle.
+      "__PACKAGE_VERSION__": JSON.stringify(process.env["npm_package_version"] ?? "0.0.0"),
     };
   },
   outExtension({ format }) {

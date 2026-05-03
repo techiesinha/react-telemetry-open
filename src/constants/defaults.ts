@@ -118,4 +118,7 @@ export const ERROR_DEDUP_STACK_CHARS = 100;
  * actual version from package.json via process.env.npm_package_version.
  * If you see this string in production events, the build was not run via npm.
  */
-export const PACKAGE_VERSION = "__PACKAGE_VERSION__";
+// __PACKAGE_VERSION__ is replaced at build time by esbuild define in tsup.config.ts
+// It must be a bare identifier reference — not a string literal — for esbuild to replace it
+declare const __PACKAGE_VERSION__: string;
+export const PACKAGE_VERSION = __PACKAGE_VERSION__;
