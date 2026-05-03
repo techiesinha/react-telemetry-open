@@ -306,9 +306,28 @@ export const resolveConfig = (
       ? (envResolvedConfig.exporter.type as ExporterType)
       : ExporterType.Console;
 
-  const exporterUrl = typeof envResolvedConfig.exporter?.url === "string"
+  const rawExporterUrl = typeof envResolvedConfig.exporter?.url === "string"
     ? envResolvedConfig.exporter.url
     : "";
+
+  // Normalise the URL at resolution time — strip trailing slashes and
+  // accidental /v1/* signal paths. Store the clean base URL.
+  // Same logic as normaliseCollectorUrl in otlpExporter.ts.
+  const exporterUrl = (() => {
+    if (!rawExporterUrl) return "";
+    try {
+      const parsed = new URL(rawExporterUrl);
+      if (parsed.protocol !== "https:" && parsed.protocol !== "http:") return rawExporterUrl;
+      let path = parsed.pathname;
+      for (const suffix of ["/v1/traces", "/v1/metrics", "/v1/logs", "/v1/"]) {
+        if (path.endsWith(suffix)) { path = path.slice(0, -suffix.length); break; }
+      }
+      path = path.replace(/\/+$/, "");
+      return `${parsed.protocol}//${parsed.host}${path}`;
+    } catch {
+      return rawExporterUrl; // keep raw — otlpExporter will warn and skip
+    }
+  })();
 
   // Warn if OTLP configured without URL
   if (exporterType === ExporterType.Otlp && !exporterUrl && debugMode) {
