@@ -1,0 +1,35 @@
+react-telemetry-open
+Copyright 2026 Abhishek Sinha (sinha@live.in)
+
+This product is licensed under the Apache License, Version 2.0.
+You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
+
+========================================================================
+THIRD-PARTY SOFTWARE NOTICES
+========================================================================
+
+This product optionally integrates with the following third-party software:
+
+------------------------------------------------------------------------
+OpenTelemetry JavaScript SDK
+Copyright The OpenTelemetry Authors
+Licensed under the Apache License, Version 2.0
+https://opentelemetry.io
+https://github.com/open-telemetry/opentelemetry-js
+
+Note: The OpenTelemetry API (@opentelemetry/api) is an optional peer
+dependency. It is isolated to src/exporters/otlp/otelAdapter.ts and
+is only loaded when the OTLP exporter is configured. No OTel SDK code
+is bundled into react-telemetry-open — it is loaded dynamically at runtime
+when needed.
+
+------------------------------------------------------------------------
+React
+Copyright Meta Platforms, Inc. and affiliates
+Licensed under the MIT License
+https://react.dev
+
+Note: React is a required peer dependency and is not bundled into
+react-telemetry-open. It is provided by the consumer of this package.
+
+------------------------------------------------------------------------

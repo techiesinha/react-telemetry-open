@@ -1,0 +1,29 @@
+# Build output
+dist/
+
+# Dependencies
+node_modules/
+
+# Environment files — may contain secrets
+.env
+.env.*
+!.env.example
+
+# Generated telemetry config — developer generates this locally
+telemetry.config.json
+telemetry.config.*.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Test coverage
+coverage/
+
+# Logs
+*.log
+npm-debug.log*

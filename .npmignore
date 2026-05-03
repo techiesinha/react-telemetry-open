@@ -1,0 +1,45 @@
+# react-telemetry .npmignore
+# Controls what is excluded from the published npm package.
+# The package.json "files" field is the primary allowlist — this file
+# provides a second layer of protection.
+
+# Source TypeScript files — only dist/ is shipped
+src/
+
+# Documentation — not needed in node_modules
+docs/
+
+# Tests
+**/*.test.ts
+**/*.test.tsx
+**/*.spec.ts
+**/*.spec.tsx
+tests/
+__tests__/
+
+# Build configuration
+tsconfig*.json
+tsup.config.ts
+.eslintrc*
+.prettierrc*
+vitest.config.*
+
+# Environment and secrets — never publish these
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+
+# Developer config files — these live in the developer's project, not ours
+telemetry.config*.json
+
+# Development tooling
+.github/
+.vscode/
+node_modules/
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
