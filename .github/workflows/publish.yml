@@ -3,7 +3,6 @@ name: Build and Publish
 # NPM_TOKEN expires every 90 days — rotate it at:
 # npmjs.com → Access Tokens → Generate New Token → Granular Access Token
 # Then update: GitHub repo → Settings → Secrets → NPM_TOKEN
-# Next rotation due: ~90 days from when you last set the token
 
 on:
   push:
@@ -11,8 +10,12 @@ on:
       - main
     tags:
       - 'v*'
+  pull_request:
+    branches:
+      - main
 
 jobs:
+  # ── Gate 1 — Build and typecheck ─────────────────────────────────────────
   build:
     name: Build and typecheck
     runs-on: ubuntu-latest
@@ -41,10 +44,168 @@ jobs:
           name: dist
           path: dist/
 
+  # ── Gate 2 — Verify package installs correctly ────────────────────────────
+  verify-package:
+    name: Verify package installs correctly
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Pack tarball
+        run: npm pack
+
+      - name: Install packed tarball into fresh project
+        run: |
+          mkdir /tmp/test-install
+          cd /tmp/test-install
+          npm init -y
+          npm install react@18 react-dom@18
+          npm install $GITHUB_WORKSPACE/react-telemetry-open-*.tgz
+          node -e "const t = require('react-telemetry-open'); console.log('Exports:', Object.keys(t).join(', '))"
+
+  # ── Gate 3 — Security audit ───────────────────────────────────────────────
+  audit:
+    name: Security audit
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Audit dependencies
+        run: npm audit --audit-level=high
+        # Fails on high or critical severity only
+        # Moderate severity in devDependencies is acceptable
+
+  # ── Gate 4 — Conventional commits ────────────────────────────────────────
+  conventional-commits:
+    name: Conventional commits
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit messages
+        run: |
+          # Valid prefixes per Conventional Commits spec
+          VALID="^(feat|fix|docs|chore|refactor|perf|test|ci|build|revert)(\(.+\))?: .+"
+
+          # Get all commits in this PR
+          COMMITS=$(git log origin/main..HEAD --format="%s")
+
+          if [ -z "$COMMITS" ]; then
+            echo "No commits to check"
+            exit 0
+          fi
+
+          echo "Checking commit messages:"
+          echo "$COMMITS"
+          echo ""
+
+          FAILED=0
+          while IFS= read -r commit; do
+            if ! echo "$commit" | grep -qE "$VALID"; then
+              echo "INVALID: $commit"
+              FAILED=1
+            else
+              echo "OK:      $commit"
+            fi
+          done <<< "$COMMITS"
+
+          if [ $FAILED -eq 1 ]; then
+            echo ""
+            echo "Commit messages must follow Conventional Commits format:"
+            echo "  feat: add rage click detection"
+            echo "  fix: session ID empty on error collector"
+            echo "  docs: update browser support table"
+            echo "  chore: bump dependencies"
+            echo ""
+            echo "Valid prefixes: feat, fix, docs, chore, refactor, perf, test, ci, build, revert"
+            echo "See: https://www.conventionalcommits.org"
+            exit 1
+          fi
+
+          echo "All commit messages are valid"
+
+  # ── Gate 5 — No secrets accidentally committed ────────────────────────────
+  secrets-scan:
+    name: Secrets scan
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Scan for secrets
+        run: |
+          # Patterns that indicate a hardcoded secret
+          PATTERNS=(
+            "apiKey\s*[:=]\s*['\"][a-zA-Z0-9_\-]{20,}['\"]"
+            "api_key\s*[:=]\s*['\"][a-zA-Z0-9_\-]{20,}['\"]"
+            "password\s*[:=]\s*['\"][^'\"]{8,}['\"]"
+            "secret\s*[:=]\s*['\"][a-zA-Z0-9_\-]{20,}['\"]"
+            "token\s*[:=]\s*['\"][a-zA-Z0-9_\-]{20,}['\"]"
+            "sk-[a-zA-Z0-9]{20,}"
+            "Bearer [a-zA-Z0-9_\-]{20,}"
+          )
+
+          FAILED=0
+
+          for pattern in "${PATTERNS[@]}"; do
+            # Search src/ and bin/ — exclude test fixtures and locale strings
+            MATCHES=$(grep -rn --include="*.ts" --include="*.tsx" --include="*.js" \
+              -E "$pattern" src/ bin/ 2>/dev/null | \
+              grep -v "//\|Locale\|\$VAR\|placeholder\|example\|test" || true)
+
+            if [ -n "$MATCHES" ]; then
+              echo "Potential secret found:"
+              echo "$MATCHES"
+              FAILED=1
+            fi
+          done
+
+          if [ $FAILED -eq 1 ]; then
+            echo ""
+            echo "Possible hardcoded secrets detected in source files."
+            echo "Use environment variables with \$VAR_NAME syntax in config files instead."
+            exit 1
+          fi
+
+          echo "No secrets detected"
+
+  # ── Publish — only on version tags, all gates must pass ───────────────────
   publish:
     name: Publish to npm
     runs-on: ubuntu-latest
-    needs: build
+    needs: [build, verify-package, audit]
     if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
