@@ -247,18 +247,6 @@ app's domain.
 
 ---
 
-## Documentation
-
-- [Getting Started](./docs/guides/getting-started.md)
-- [Configuration Reference](./docs/guides/configuration.md)
-- [API Reference](./docs/api/overview.md)
-- [System Design](./docs/system-design/overview.md)
-- [Signals](./docs/signals/overview.md)
-- [Troubleshooting](./docs/guides/troubleshooting.md)
-
----
-
-
 ## Contributing & Bug Reports
 
 Found a bug? Have a feature request?
