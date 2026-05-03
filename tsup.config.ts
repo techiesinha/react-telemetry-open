@@ -28,10 +28,12 @@ export default defineConfig({
     options.target = "es2020";
     options.define = {
       // Replace the version placeholder with the actual package version at build time.
-      // npm sets npm_package_version when running scripts — guaranteed to be correct.
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      // Reads from npm_package_version (set by npm scripts) or directly from package.json.
+      "process.env.npm_package_version": JSON.stringify(
+        process.env["npm_package_version"] ?? require("./package.json").version
+      ),
       "__PACKAGE_VERSION__": JSON.stringify(
-        process.env["npm_package_version"] ?? "1.0.0"
+        process.env["npm_package_version"] ?? require("./package.json").version
       ),
       // We deliberately do NOT define process.env.* here.
       // Doing so would bake environment variable values into the published package —
