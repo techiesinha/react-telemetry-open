@@ -225,6 +225,18 @@ Data flows to any OTel-compatible backend.
 
 ---
 
+## Contributing & Bug Reports
+
+Found a bug? Have a feature request?
+
+- **Report a bug** → [Open a Bug Report](https://github.com/techiesinha/react-telemetry-open/issues/new?template=bug_report.yml)
+- **Request a feature** → [Open a Feature Request](https://github.com/techiesinha/react-telemetry-open/issues/new?template=feature_request.yml)
+- **Contribute code** → Read [CONTRIBUTING.md](./CONTRIBUTING.md) then open a Pull Request
+
+All contributions are welcome. Please read the contributing guide before opening a PR.
+
+---
+
 ## License
 
 Apache 2.0 — Copyright 2026 Abhishek Sinha (sinha@live.in)
