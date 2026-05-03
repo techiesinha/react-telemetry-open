@@ -14,6 +14,6 @@
  * limitations under the License.
  */
 
-export { OtlpExporter } from "./otlpExporter";
-export { toOtlpPayload } from "./otelAdapter";
+export { OtlpExporter, normaliseCollectorUrl } from "./otlpExporter";
+export { toOtlpPayload, toMetricsPayload, toTracesPayload, toLogsPayload } from "./otelAdapter";
 export type { OtlpPayload } from "./otelAdapter";

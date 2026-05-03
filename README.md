@@ -201,6 +201,39 @@ Data flows to any OTel-compatible backend.
 
 ---
 
+## Backend compatibility
+
+react-telemetry-open sends standard OTLP/HTTP — works with any OTel-compatible backend.
+
+| Backend | Direct from browser | Notes |
+|---|---|---|
+| Self-hosted OTel Collector | ✅ | Configure CORS on your collector |
+| Grafana Alloy (self-hosted) | ✅ | Configure CORS in alloy.config |
+| Honeycomb | ✅ | Works directly |
+| Axiom | ✅ | Works directly |
+| Grafana Cloud | ⚠️ | Requires a proxy — see below |
+| Any OTLP/HTTP endpoint | ✅ | As long as CORS headers are present |
+
+### Grafana Cloud and CORS
+
+Grafana Cloud's OTLP gateway does not support browser CORS — it is designed
+for server-to-server communication. A lightweight proxy is required between
+your app and Grafana Cloud:
+
+```
+Browser → your proxy (CORS enabled) → Grafana Cloud
+```
+
+The simplest proxy is a single Vercel or Netlify serverless function that
+forwards requests with your Grafana credentials server-side. This keeps
+your API key off the client entirely.
+
+For self-hosted OTel Collector or Grafana Alloy, direct browser connections
+work — configure `cors.allowed_origins` in your collector to include your
+app's domain.
+
+---
+
 ## Browser support
 
 | Signal | Chrome | Edge | Firefox | Safari |
@@ -225,6 +258,7 @@ Data flows to any OTel-compatible backend.
 
 ---
 
+
 ## Contributing & Bug Reports
 
 Found a bug? Have a feature request?
@@ -234,6 +268,17 @@ Found a bug? Have a feature request?
 - **Contribute code** → Read [CONTRIBUTING.md](./CONTRIBUTING.md) then open a Pull Request
 
 All contributions are welcome. Please read the contributing guide before opening a PR.
+
+---
+
+## Documentation
+
+- [Getting Started](./docs/guides/getting-started.md)
+- [Configuration Reference](./docs/guides/configuration.md)
+- [API Reference](./docs/api/overview.md)
+- [System Design](./docs/system-design/overview.md)
+- [Signals](./docs/signals/overview.md)
+- [Troubleshooting](./docs/guides/troubleshooting.md)
 
 ---
 

@@ -11,17 +11,26 @@ THIRD-PARTY SOFTWARE NOTICES
 This product optionally integrates with the following third-party software:
 
 ------------------------------------------------------------------------
-OpenTelemetry JavaScript SDK
+OpenTelemetry Protocol Specification
 Copyright The OpenTelemetry Authors
 Licensed under the Apache License, Version 2.0
-https://opentelemetry.io
-https://github.com/open-telemetry/opentelemetry-js
+https://opentelemetry.io/docs/specs/otlp/
+https://github.com/open-telemetry/opentelemetry-proto/tree/v1.3.2
 
-Note: The OpenTelemetry API (@opentelemetry/api) is an optional peer
-dependency. It is isolated to src/exporters/otlp/otelAdapter.ts and
-is only loaded when the OTLP exporter is configured. No OTel SDK code
-is bundled into react-telemetry-open — it is loaded dynamically at runtime
-when needed.
+Note: react-telemetry-open implements OTLP/HTTP JSON serialisation from
+scratch, following the OpenTelemetry Protocol Specification v1.3.2.
+No code from the OpenTelemetry JavaScript SDK (@opentelemetry/sdk-*) is
+included in this package. The implementation covers:
+
+  - opentelemetry-proto/.../metrics/v1/metrics.proto (Gauge metric type)
+  - opentelemetry-proto/.../trace/v1/trace.proto (Span type)
+  - opentelemetry-proto/.../logs/v1/logs.proto (LogRecord type)
+  - opentelemetry-proto/.../common/v1/common.proto (KeyValue attributes)
+
+Known deviations from the full specification (planned for future releases):
+  - Metrics: only Gauge type implemented (Histogram planned for v1.1.0)
+  - Spans: no parentSpanId — all spans are root spans (planned for v2.0.0)
+  - No W3C traceparent header propagation (planned for v2.0.0)
 
 ------------------------------------------------------------------------
 React

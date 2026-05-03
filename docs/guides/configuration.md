@@ -390,3 +390,59 @@ data to users who open DevTools.
 ---
 
 © 2026 Abhishek Sinha. Licensed under Apache 2.0.
+
+---
+
+## Sending to Grafana in development
+
+The package has no knowledge of environments — it sends to whatever URL is in
+`exporter.url`. You can send to Grafana in development for testing.
+
+Add to your `.env` file (not just `.env.production`):
+
+```
+VITE_OTEL_URL=https://otlp-gateway-prod-ap-south-1.grafana.net/otlp
+VITE_OTEL_KEY=Basic YOUR_BASE64_TOKEN
+```
+
+Update `telemetry.config.json` (dev config) to use OTLP:
+
+```json
+{
+  "exporter": {
+    "type": "otlp",
+    "url": "$VITE_OTEL_URL",
+    "apiKey": "$VITE_OTEL_KEY"
+  },
+  "debug": true
+}
+```
+
+Note: Grafana Cloud blocks direct browser requests due to CORS. You need a
+proxy between your dev server and Grafana. For local testing, run Grafana
+Alloy on `localhost:4318` with CORS configured, and point `VITE_OTEL_URL`
+to `http://localhost:4318`.
+
+---
+
+## OTLP URL format
+
+Set the base URL only — do not include signal paths. The package appends
+the correct paths automatically per the OTLP specification:
+
+```
+/v1/metrics  ← metrics (render duration, web vitals, memory)
+/v1/traces   ← spans (network calls, route changes)
+/v1/logs     ← logs (errors, interactions, custom events)
+```
+
+**Correct:**
+```json
+{ "url": "https://otlp-gateway-prod-ap-south-1.grafana.net/otlp" }
+```
+
+**Also handled correctly — the package strips known path suffixes:**
+```json
+{ "url": "https://otlp-gateway-prod-ap-south-1.grafana.net/otlp/v1/traces" }
+{ "url": "https://otlp-gateway-prod-ap-south-1.grafana.net/otlp/" }
+```

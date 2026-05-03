@@ -15,14 +15,25 @@
  */
 
 /**
- * OTel Adapter — the ONLY file in react-telemetry-open that imports from @opentelemetry/api.
+ * OTLP/HTTP JSON serialisation — manual implementation.
  *
- * This isolation ensures:
- * - SDK changes affect exactly one file
- * - No-op fallback activates automatically when SDK is absent
- * - OTel SDK is never loaded for console-only configurations
+ * Implements the OpenTelemetry Protocol Specification v1.3.2:
+ *   https://opentelemetry.io/docs/specs/otlp/
+ *   https://github.com/open-telemetry/opentelemetry-proto/tree/v1.3.2
  *
- * All other source files interact with OTel exclusively through this adapter.
+ * Specifically implements:
+ *   opentelemetry-proto/opentelemetry/proto/metrics/v1/metrics.proto
+ *   opentelemetry-proto/opentelemetry/proto/trace/v1/trace.proto
+ *   opentelemetry-proto/opentelemetry/proto/logs/v1/logs.proto
+ *   opentelemetry-proto/opentelemetry/proto/common/v1/common.proto
+ *
+ * Known limitations vs full spec:
+ *   - All metrics emitted as Gauge (not Histogram or Sum) — planned for v1.1.0
+ *   - Spans have no parentSpanId — all appear as root spans — planned for v2.0.0
+ *   - No W3C traceparent propagation — planned for v2.0.0
+ *
+ * This file does not import from @opentelemetry/api or any OTel SDK package.
+ * OTLP serialisation is implemented from scratch against the proto spec above.
  */
 
 import type { ProcessedEvent, EnrichedEvent } from "../../types/internal";
@@ -155,46 +166,48 @@ const buildOtlpScope = (): OtlpScope => ({
 });
 
 /**
- * Converts a batch of processed events to an OTLP/HTTP payload.
- * Groups events by signal type — metrics, spans, and logs — into
- * their respective OTLP resource arrays.
- *
- * Timestamp conversion: Date.now() milliseconds → nanoseconds for OTLP.
+ * Converts metric events to an OTLP metrics payload.
+ * Send to: {baseUrl}/v1/metrics
+ */
+export const toMetricsPayload = (batch: ProcessedEvent[]): OtlpPayload => {
+  const metricEvents = batch.filter((e) => e.type === SignalType.Metric);
+  if (metricEvents.length === 0) return {};
+  return { resourceMetrics: [buildResourceMetrics(metricEvents)] };
+};
+
+/**
+ * Converts span events to an OTLP traces payload.
+ * Send to: {baseUrl}/v1/traces
+ */
+export const toTracesPayload = (batch: ProcessedEvent[]): OtlpPayload => {
+  const spanEvents = batch.filter((e) => e.type === SignalType.Span);
+  if (spanEvents.length === 0) return {};
+  return { resourceTraces: [buildResourceTraces(spanEvents)] };
+};
+
+/**
+ * Converts log events to an OTLP logs payload.
+ * Send to: {baseUrl}/v1/logs
+ */
+export const toLogsPayload = (batch: ProcessedEvent[]): OtlpPayload => {
+  const logEvents = batch.filter((e) => e.type === SignalType.Log);
+  if (logEvents.length === 0) return {};
+  return { resourceLogs: [buildResourceLogs(logEvents)] };
+};
+
+/**
+ * @deprecated Use toMetricsPayload, toTracesPayload, toLogsPayload separately.
+ * Kept for backwards compatibility — will be removed in v2.0.0.
  */
 export const toOtlpPayload = (batch: ProcessedEvent[]): OtlpPayload => {
-  const metricEvents: ProcessedEvent[] = [];
-  const spanEvents: ProcessedEvent[] = [];
-  const logEvents: ProcessedEvent[] = [];
-
-  for (const processedEvent of batch) {
-    switch (processedEvent.type) {
-      case SignalType.Metric:
-        metricEvents.push(processedEvent);
-        break;
-      case SignalType.Span:
-        spanEvents.push(processedEvent);
-        break;
-      case SignalType.Log:
-        logEvents.push(processedEvent);
-        break;
-    }
-  }
-
-  const otlpPayload: OtlpPayload = {};
-
-  if (metricEvents.length > 0) {
-    otlpPayload.resourceMetrics = [buildResourceMetrics(metricEvents)];
-  }
-
-  if (spanEvents.length > 0) {
-    otlpPayload.resourceTraces = [buildResourceTraces(spanEvents)];
-  }
-
-  if (logEvents.length > 0) {
-    otlpPayload.resourceLogs = [buildResourceLogs(logEvents)];
-  }
-
-  return otlpPayload;
+  const payload: OtlpPayload = {};
+  const metrics = toMetricsPayload(batch);
+  const traces = toTracesPayload(batch);
+  const logs = toLogsPayload(batch);
+  if (metrics.resourceMetrics) payload.resourceMetrics = metrics.resourceMetrics;
+  if (traces.resourceTraces) payload.resourceTraces = traces.resourceTraces;
+  if (logs.resourceLogs) payload.resourceLogs = logs.resourceLogs;
+  return payload;
 };
 
 const buildResourceMetrics = (events: ProcessedEvent[]): OtlpResourceMetrics => ({

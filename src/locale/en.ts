@@ -172,6 +172,11 @@ export const Locale = {
     circuitClosed:
       "[react-telemetry-open] Circuit breaker CLOSED. Telemetry export resumed.",
 
+    invalidCollectorUrl:
+      "[react-telemetry-open] Invalid or unsupported collector URL: '{url}'. " +
+      "URL must start with https:// or http:// and be a valid URL. " +
+      "Example: https://otlp-gateway-prod-ap-south-1.grafana.net/otlp — no trailing slash, no /v1/* path.",
+
     payloadTooLarge:
       "[react-telemetry-open] Export payload too large ({sizeBytes} bytes). " +
       "Splitting batch and retrying.",
