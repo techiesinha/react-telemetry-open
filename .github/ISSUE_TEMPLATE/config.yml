@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Documentation
+    url: https://github.com/techiesinha/react-telemetry-open/blob/main/README.md
+    about: Read the docs before opening an issue
+  - name: npm package
+    url: https://npmjs.com/package/react-telemetry-open
+    about: View the published package

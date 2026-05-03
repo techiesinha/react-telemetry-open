@@ -1,0 +1,44 @@
+name: Feature Request
+description: Suggest a new signal, option, or improvement
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for suggesting an improvement to react-telemetry-open.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: Describe the observability gap you are trying to fill.
+    validations:
+      required: true
+
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How would you like this to work?
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Any other approaches you have thought of?
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - New signal
+        - Configuration option
+        - Performance improvement
+        - Developer experience
+        - Documentation
+        - Other
+    validations:
+      required: true
