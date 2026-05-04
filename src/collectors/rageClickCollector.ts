@@ -272,11 +272,11 @@ export class RageClickCollector {
 
   /**
    * Produces a stable element identifier using structural attributes only.
-   * Priority: data-testid → id → aria-label → tag + type + name + class
+   * Priority: data-testid → id → aria-label → tag + type + name + class + text
    *
-   * textContent is intentionally excluded — it changes with React state
-   * (e.g. a counter button "Count: 0", "Count: 1") which would give a
-   * different ID on every click, preventing rage click accumulation.
+   * Text content is used as a last resort only when short (under 50 chars)
+   * and contains no digits — this filters out dynamic text like "Count: 47"
+   * while capturing static labels like "Submit Order" or "Cancel".
    */
   private static getElementIdentifier(element: HTMLElement): string {
     const testId = element.getAttribute("data-testid");
@@ -295,6 +295,17 @@ export class RageClickCollector {
       ? `.${element.className.trim().split(/\s+/).join(".")}`
       : "";
 
-    return `${tagName}${typeAttr ? `[type=${typeAttr}]` : ""}${nameAttr ? `[name=${nameAttr}]` : ""}${classAttr}`;
+    const base = `${tagName}${typeAttr ? `[type=${typeAttr}]` : ""}${nameAttr ? `[name=${nameAttr}]` : ""}${classAttr}`;
+
+    // Last resort — use visible text content if it is short and static.
+    // Guards: under 50 chars (long text is likely dynamic content) and
+    // no digits (e.g. "Count: 47" changes on every click, "Submit Order" does not).
+    // textContent with digits is intentionally excluded — it changes with React state.
+    const text = element.textContent?.trim() ?? "";
+    if (text && text.length < 50 && !/\d/.test(text)) {
+      return `${base}[text="${text}"]`;
+    }
+
+    return base;
   }
 }

@@ -290,6 +290,8 @@ All contributions are welcome.
 
 - [Getting Started](./docs/guides/getting-started.md)
 - [Configuration Reference](./docs/guides/configuration.md)
+- [Interpreting Your Data](./docs/guides/interpreting-your-data.md)
+- [Signals Overview](./docs/signals/overview.md)
 - [Signals Reference](./docs/signals/reference.md)
 - [API Reference](./docs/api/overview.md)
 - [System Design](./docs/system-design/overview.md)

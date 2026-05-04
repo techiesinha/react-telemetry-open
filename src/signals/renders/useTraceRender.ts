@@ -28,11 +28,15 @@ import { STRICT_MODE_DEDUP_WINDOW_MS } from "../../constants";
  *
  * Add to any component you want to measure:
  * ```tsx
- * function UserDashboard() {
- *   useTraceRender('UserDashboard');
+ * function UserDashboard({ userId, theme }: Props) {
+ *   useTraceRender('UserDashboard', { userId, theme });
  *   return <div>...</div>;
  * }
  * ```
+ *
+ * Pass props to get render reason tracking — which specific props changed
+ * to trigger this render. Without props, only render count and duration
+ * are tracked.
  *
  * Emits: react.render.duration metric on every render completion.
  *
@@ -42,7 +46,10 @@ import { STRICT_MODE_DEDUP_WINDOW_MS } from "../../constants";
  * - useLayoutEffect for accurate timing — fires synchronously after commit
  * - useEffect for Signal Bus emit — async, never blocks paint
  */
-export const useTraceRender = (componentName?: string): void => {
+export const useTraceRender = (
+  componentName?: string,
+  props?: Record<string, unknown>
+): void => {
   const telemetryContext = useContext(TelemetryContext);
 
   // Capture start time synchronously at the top of each render — this is the
@@ -55,12 +62,29 @@ export const useTraceRender = (componentName?: string): void => {
   const renderTimestamp = useRef(thisRenderTimestamp);
   const renderCount = useRef(0);
   const lastRenderTime = useRef(0);
+  const prevPropsRef = useRef<Record<string, unknown> | undefined>(undefined);
   const resolvedName = componentName ?? "Unknown";
 
   // Always update refs with current render's time — handles remounts after
   // ErrorBoundary catches (refs survive remount with stale values otherwise)
   renderStartTime.current = thisRenderStartTime;
   renderTimestamp.current = thisRenderTimestamp;
+
+  // Compute which props changed to trigger this render — only when props provided
+  const changedProps: string[] = [];
+  if (props && prevPropsRef.current) {
+    const allKeys = new Set([
+      ...Object.keys(props),
+      ...Object.keys(prevPropsRef.current),
+    ]);
+    for (const key of allKeys) {
+      if (props[key] !== prevPropsRef.current[key]) {
+        changedProps.push(key);
+      }
+    }
+  }
+  // Always update prevProps after diffing
+  prevPropsRef.current = props;
 
   useEffect(() => {
     if (!componentName && telemetryContext?.config.debug) {
@@ -105,6 +129,7 @@ export const useTraceRender = (componentName?: string): void => {
     const capturedCount = renderCount.current;
     const capturedStart = renderStartTime.current;
     const capturedEnd = renderEndTime;
+    const capturedChangedProps = changedProps;
 
     renderStartTime.current = thisRenderStartTime;
     renderTimestamp.current = thisRenderTimestamp;
@@ -127,6 +152,11 @@ export const useTraceRender = (componentName?: string): void => {
           priority: capturedDuration > 16.67
             ? RenderPriority.Urgent
             : RenderPriority.Deferred,
+          // Only present when props passed to useTraceRender and a re-render occurred.
+          // Empty on first render (no previous props to diff against).
+          ...(capturedChangedProps.length > 0
+            ? { changedProps: capturedChangedProps.join(", ") }
+            : {}),
         },
       });
     });
