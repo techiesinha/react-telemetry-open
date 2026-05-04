@@ -1,6 +1,6 @@
 {
   "name": "react-telemetry-open",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "React-aware, vendor-neutral observability for React 18+ applications. Zero boilerplate. OTLP/HTTP output.",
   "author": "Abhishek Sinha <sinha@live.in>",
   "license": "Apache-2.0",
