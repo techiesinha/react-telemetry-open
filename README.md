@@ -8,6 +8,7 @@ Zero boilerplate. OTLP output. No vendor lock-in.
 [![npm downloads](https://img.shields.io/npm/dm/react-telemetry-open)](https://npmjs.com/package/react-telemetry-open)
 [![Build](https://github.com/techiesinha/react-telemetry-open/actions/workflows/publish.yml/badge.svg)](https://github.com/techiesinha/react-telemetry-open/actions)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](./LICENSE)
+[![OpenTelemetry Registry](https://img.shields.io/badge/OpenTelemetry-Registry-blue?logo=opentelemetry)](https://opentelemetry.io/ecosystem/registry/?s=react-telemetry-open&component=instrumentation)
 
 ---
 
